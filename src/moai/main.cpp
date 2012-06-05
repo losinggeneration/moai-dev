@@ -4,10 +4,10 @@
 // http://getmoai.com
 //----------------------------------------------------------------//
 
-#include <aku/AKUGlut.h>
+#include <hosts/GlutHost.h>
 
 //----------------------------------------------------------------//
 int main ( int argc, char** argv ) {
 
-	return AKUGlut ( argc, argv );
+	return GlutHost ( argc, argv );
 }

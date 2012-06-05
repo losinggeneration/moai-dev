@@ -40,6 +40,8 @@
 #ifdef _WIN32
 	#include <glut.h>
 	#include <FolderWatcher-win.h>
+#elif defined __unix__
+	#include <GL/glut.h>
 #else
 	#include <GLUT/glut.h>
 #endif
