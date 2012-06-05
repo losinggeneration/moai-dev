@@ -1,0 +1,25 @@
+include_directories(
+	${SRC_DIR}
+	${SRC_DIR}/config-default
+	${THIRDPARTY_DIR}
+	${BOX2D_DIR}
+	${CHIPMUNK_INC_DIR}
+	${JANSSON_DIR}
+	${JPEG_DIR}
+	${LUA_DIR}
+	${TINYXML_DIR}
+)
+
+add_subdirectory(aku)
+add_subdirectory(hosts)
+add_subdirectory(moai)
+add_subdirectory(moaicore)
+add_subdirectory(moaiext-android)
+add_subdirectory(moaiext-audiosampler)
+add_subdirectory(moaiext-debugger)
+add_subdirectory(moaiext-fmod)
+add_subdirectory(moaiext-iphone)
+add_subdirectory(moaiext-untz)
+add_subdirectory(uslscore)
+add_subdirectory(work)
+add_subdirectory(zipfs)
