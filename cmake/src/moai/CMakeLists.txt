@@ -11,7 +11,7 @@ target_link_libraries(moai
 	gluthost
 	moaicore
 	uslscore
-	zipfs
+	zlcore
 
 # 3rd party
 	chipmunk

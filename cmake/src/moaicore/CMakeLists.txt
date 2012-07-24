@@ -1,16 +1,17 @@
 set(MOAICORE_DIR ${SRC_DIR}/moaicore)
 
 set(MOAICORE_SRCS
-	${MOAICORE_DIR}/moaicore-pch.cpp
-	${MOAICORE_DIR}/moaicore.cpp
 	${MOAICORE_DIR}/MOAIAction.cpp
 	${MOAICORE_DIR}/MOAIActionMgr.cpp
 	${MOAICORE_DIR}/MOAIAnim.cpp
 	${MOAICORE_DIR}/MOAIAnimCurve.cpp
+	${MOAICORE_DIR}/MOAIAnimCurveBase.cpp
+	${MOAICORE_DIR}/MOAIAnimCurveQuat.cpp
+	${MOAICORE_DIR}/MOAIAnimCurveVec.cpp
 	${MOAICORE_DIR}/MOAIBitmapFontReader.cpp
-	${MOAICORE_DIR}/MOAIBitmapFontRipper.cpp
 	${MOAICORE_DIR}/MOAIBlendMode.cpp
 	${MOAICORE_DIR}/MOAIBlocker.cpp
+	${MOAICORE_DIR}/MOAIBoundsDeck.cpp
 	${MOAICORE_DIR}/MOAIBox2DArbiter.cpp
 	${MOAICORE_DIR}/MOAIBox2DBody.cpp
 	${MOAICORE_DIR}/MOAIBox2DDebugDraw.cpp
@@ -45,10 +46,10 @@ set(MOAICORE_SRCS
 	${MOAICORE_DIR}/MOAICpShape.cpp
 	${MOAICORE_DIR}/MOAICpSpace.cpp
 	${MOAICORE_DIR}/MOAIDataBuffer.cpp
+	${MOAICORE_DIR}/MOAIDataBufferStream.cpp
 	${MOAICORE_DIR}/MOAIDataIOAction.cpp
 	${MOAICORE_DIR}/MOAIDebugLines.cpp
 	${MOAICORE_DIR}/MOAIDeck.cpp
-	${MOAICORE_DIR}/MOAIDeck2D.cpp
 	${MOAICORE_DIR}/MOAIDeckRemapper.cpp
 	${MOAICORE_DIR}/MOAIDeserializer.cpp
 	${MOAICORE_DIR}/MOAIDraw.cpp
@@ -56,9 +57,13 @@ set(MOAICORE_SRCS
 	${MOAICORE_DIR}/MOAIEaseType.cpp
 	${MOAICORE_DIR}/MOAIEnvironment.cpp
 	${MOAICORE_DIR}/MOAIEventSource.cpp
+	${MOAICORE_DIR}/MOAIFileStream.cpp
 	${MOAICORE_DIR}/MOAIFileSystem.cpp
 	${MOAICORE_DIR}/MOAIFont.cpp
 	${MOAICORE_DIR}/MOAIFontReader.cpp
+	${MOAICORE_DIR}/MOAIFont_bmfont.cpp
+	${MOAICORE_DIR}/MOAIFoo.cpp
+	${MOAICORE_DIR}/MOAIFooMgr.cpp
 	${MOAICORE_DIR}/MOAIFrameBuffer.cpp
 	${MOAICORE_DIR}/MOAIFreeTypeFontReader.cpp
 	${MOAICORE_DIR}/MOAIGfxDevice.cpp
@@ -73,6 +78,7 @@ set(MOAICORE_SRCS
 	${MOAICORE_DIR}/MOAIGlyphCachePage.cpp
 	${MOAICORE_DIR}/MOAIGlyphSet.cpp
 	${MOAICORE_DIR}/MOAIGrid.cpp
+	${MOAICORE_DIR}/MOAIGridDeck2D.cpp
 	${MOAICORE_DIR}/MOAIGridPathGraph.cpp
 	${MOAICORE_DIR}/MOAIGridSpace.cpp
 	${MOAICORE_DIR}/MOAIHttpTaskBase.cpp
@@ -92,7 +98,6 @@ set(MOAICORE_SRCS
 	${MOAICORE_DIR}/MOAILayer2D.cpp
 	${MOAICORE_DIR}/MOAILayerBridge.cpp
 	${MOAICORE_DIR}/MOAILayoutFrame.cpp
-	${MOAICORE_DIR}/MOAILineBrush.cpp
 	${MOAICORE_DIR}/MOAILocationSensor.cpp
 	${MOAICORE_DIR}/MOAILogMessages.cpp
 	${MOAICORE_DIR}/MOAILogMgr.cpp
@@ -101,6 +106,7 @@ set(MOAICORE_SRCS
 	${MOAICORE_DIR}/MOAILuaRuntime.cpp
 	${MOAICORE_DIR}/MOAILuaState.cpp
 	${MOAICORE_DIR}/MOAILuaStateHandle.cpp
+	${MOAICORE_DIR}/MOAIMemStream.cpp
 	${MOAICORE_DIR}/MOAIMesh.cpp
 	${MOAICORE_DIR}/MOAIMotionSensor.cpp
 	${MOAICORE_DIR}/MOAIMultiTexture.cpp
@@ -108,9 +114,11 @@ set(MOAICORE_SRCS
 	${MOAICORE_DIR}/MOAINodeMgr.cpp
 	${MOAICORE_DIR}/MOAIObject.cpp
 	${MOAICORE_DIR}/MOAIParser.cpp
+	${MOAICORE_DIR}/MOAIParticleCallbackPlugin.cpp
 	${MOAICORE_DIR}/MOAIParticleDistanceEmitter.cpp
 	${MOAICORE_DIR}/MOAIParticleEmitter.cpp
 	${MOAICORE_DIR}/MOAIParticleForce.cpp
+	${MOAICORE_DIR}/MOAIParticlePexPlugin.cpp
 	${MOAICORE_DIR}/MOAIParticlePlugin.cpp
 	${MOAICORE_DIR}/MOAIParticleScript.cpp
 	${MOAICORE_DIR}/MOAIParticleState.cpp
@@ -131,6 +139,7 @@ set(MOAICORE_SRCS
 	${MOAICORE_DIR}/MOAIRenderMgr.cpp
 	${MOAICORE_DIR}/MOAIRenderable.cpp
 	${MOAICORE_DIR}/MOAIRtti.cpp
+	${MOAICORE_DIR}/MOAIScissorRect.cpp
 	${MOAICORE_DIR}/MOAIScriptDeck.cpp
 	${MOAICORE_DIR}/MOAIScriptNode.cpp
 	${MOAICORE_DIR}/MOAISensor.cpp
@@ -140,10 +149,14 @@ set(MOAICORE_SRCS
 	${MOAICORE_DIR}/MOAIShaderMgr.cpp
 	${MOAICORE_DIR}/MOAISim.cpp
 	${MOAICORE_DIR}/MOAIStaticGlyphCache.cpp
+	${MOAICORE_DIR}/MOAIStream.cpp
+	${MOAICORE_DIR}/MOAIStreamReader.cpp
+	${MOAICORE_DIR}/MOAIStreamWriter.cpp
 	${MOAICORE_DIR}/MOAIStretchPatch2D.cpp
 	${MOAICORE_DIR}/MOAISurfaceDeck2D.cpp
 	${MOAICORE_DIR}/MOAISurfaceSampler2D.cpp
 	${MOAICORE_DIR}/MOAITextBox.cpp
+	${MOAICORE_DIR}/MOAITextBundle.cpp
 	${MOAICORE_DIR}/MOAITextDesigner.cpp
 	${MOAICORE_DIR}/MOAITextStyle.cpp
 	${MOAICORE_DIR}/MOAITextStyler.cpp
@@ -164,6 +177,8 @@ set(MOAICORE_SRCS
 	${MOAICORE_DIR}/MOAIViewport.cpp
 	${MOAICORE_DIR}/MOAIWheelSensor.cpp
 	${MOAICORE_DIR}/MOAIXmlParser.cpp
+	${MOAICORE_DIR}/moaicore-pch.cpp
+	${MOAICORE_DIR}/moaicore.cpp
 )
 
 add_library(moaicore ${MOAICORE_SRCS})

@@ -2,21 +2,22 @@ set(MOAIUSLSCORE_DIR ${SRC_DIR}/uslscore)
 
 include_directories(${OOID_DIR})
 
-add_library(uslscore
+set(MOAIUSLSCORE_SRCS
 	${MOAIUSLSCORE_DIR}/STLString.cpp
 	${MOAIUSLSCORE_DIR}/USAdapterInfo_posix.cpp
 	${MOAIUSLSCORE_DIR}/USAdapterInfo_win32.cpp
-	${MOAIUSLSCORE_DIR}/USBase64Cipher.cpp
+	${MOAIUSLSCORE_DIR}/USBase64Encoder.cpp
+	${MOAIUSLSCORE_DIR}/USBase64Reader.cpp
+	${MOAIUSLSCORE_DIR}/USBase64Writer.cpp
 	${MOAIUSLSCORE_DIR}/USBox.cpp
 	${MOAIUSLSCORE_DIR}/USByteStream.cpp
 	${MOAIUSLSCORE_DIR}/USCgt.cpp
-	${MOAIUSLSCORE_DIR}/USCipher.cpp
-	${MOAIUSLSCORE_DIR}/USCipherStream.cpp
 	${MOAIUSLSCORE_DIR}/USColor.cpp
 	${MOAIUSLSCORE_DIR}/USCurve.cpp
 	${MOAIUSLSCORE_DIR}/USData.cpp
 	${MOAIUSLSCORE_DIR}/USDataIOTask.cpp
-	${MOAIUSLSCORE_DIR}/USDeflater.cpp
+	${MOAIUSLSCORE_DIR}/USDeflateReader.cpp
+	${MOAIUSLSCORE_DIR}/USDeflateWriter.cpp
 	${MOAIUSLSCORE_DIR}/USDeviceTime_apple.cpp
 	${MOAIUSLSCORE_DIR}/USDeviceTime_nacl.cpp
 	${MOAIUSLSCORE_DIR}/USDeviceTime_posix.cpp
@@ -25,10 +26,8 @@ add_library(uslscore
 	${MOAIUSLSCORE_DIR}/USDistance.cpp
 	${MOAIUSLSCORE_DIR}/USFileStream.cpp
 	${MOAIUSLSCORE_DIR}/USFileSys.cpp
-	${MOAIUSLSCORE_DIR}/USFilename.cpp
 	${MOAIUSLSCORE_DIR}/USFrustum.cpp
 	${MOAIUSLSCORE_DIR}/USHexDump.cpp
-	${MOAIUSLSCORE_DIR}/USInflater.cpp
 	${MOAIUSLSCORE_DIR}/USInterpolate.cpp
 	${MOAIUSLSCORE_DIR}/USIntersect.cpp
 	${MOAIUSLSCORE_DIR}/USLexStream.cpp
@@ -44,9 +43,11 @@ add_library(uslscore
 	${MOAIUSLSCORE_DIR}/USPrism.cpp
 	${MOAIUSLSCORE_DIR}/USQuad.cpp
 	${MOAIUSLSCORE_DIR}/USQuadCoord.cpp
+	${MOAIUSLSCORE_DIR}/USQuaternion.cpp
 	${MOAIUSLSCORE_DIR}/USRhombus.cpp
 	${MOAIUSLSCORE_DIR}/USStream.cpp
-	${MOAIUSLSCORE_DIR}/USStreamFormatter.cpp
+	${MOAIUSLSCORE_DIR}/USStreamReader.cpp
+	${MOAIUSLSCORE_DIR}/USStreamWriter.cpp
 	${MOAIUSLSCORE_DIR}/USSurface2D.cpp
 	${MOAIUSLSCORE_DIR}/USSyntaxNode.cpp
 	${MOAIUSLSCORE_DIR}/USSyntaxScanner.cpp
@@ -63,4 +64,8 @@ add_library(uslscore
 	${MOAIUSLSCORE_DIR}/USZip.cpp
 	${MOAIUSLSCORE_DIR}/USZipFile.cpp
 	${MOAIUSLSCORE_DIR}/uslscore-pch.cpp
+)
+
+add_library(uslscore
+	${MOAIUSLSCORE_SRCS}
 )
