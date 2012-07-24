@@ -6,6 +6,7 @@
 
 #include <moaicore/MOAIBlendMode.h>
 #include <moaicore/MOAIColor.h>
+#include <moaicore/MOAIImage.h>
 #include <moaicore/MOAIEventSource.h>
 #include <moaicore/MOAILua.h>
 
@@ -45,6 +46,8 @@ public:
 //================================================================//
 /**	@name	MOAIGfxDevice
 	@text	Interface to the graphics singleton.
+	
+	@const	EVENT_RESIZE
 */
 class MOAIGfxDevice :
 	public MOAIGlobalClass < MOAIGfxDevice, MOAIGlobalEventSource > {
@@ -103,7 +106,6 @@ private:
 
 	u32				mDrawCount;
 	bool			mHasContext;
-	u32				mHeight;
 
 	bool			mIsFramebufferSupported;
 	bool			mIsOpenGLES;
@@ -145,6 +147,7 @@ private:
 	USMatrix4x4		mUVTransform;
 
 	const MOAIVertexFormat*	mVertexFormat;
+	void* mVertexFormatBuffer;
 
 	u32				mVertexMtxInput;
 	u32				mVertexMtxOutput;
@@ -153,6 +156,8 @@ private:
 	USRect			mViewRect;
 
 	u32				mWidth;
+	u32				mHeight;
+	bool			mLandscape;
 
 	USFrustum		mViewVolume;
 	
@@ -182,7 +187,6 @@ private:
 	void					UpdateUVMtx				();
 	USRect					WndRectToDevice			( USRect rect ) const;
 	
-
 public:
 	
 	friend class MOAIGfxResource;
@@ -203,6 +207,8 @@ public:
 	GET ( USColorVec, AmbientColor, mAmbientColor )
 	GET ( USColorVec, FinalColor, mFinalColor )
 	GET ( USColorVec, PenColor, mPenColor )
+	
+	GET_SET ( bool, Landscape, mLandscape )
 	
 	//----------------------------------------------------------------//
 	void					BeginDrawing			();
@@ -244,6 +250,8 @@ public:
 	
 	void					ProcessDeleters			();
 	void					PushDeleter				( u32 type, GLuint id );
+
+	void					ReadFrameBuffer			( MOAIImage * img );
 
 	void					RegisterLuaClass		( MOAILuaState& state );
 	void					ReleaseResources		();
@@ -304,6 +312,7 @@ public:
 	
 	void					SetVertexFormat			();
 	void					SetVertexFormat			( const MOAIVertexFormat& format );
+	void					SetVertexFormat			( const MOAIVertexFormat& format, void* buffer );
 	void					SetVertexMtxMode		( u32 input, u32 output );
 	void					SetVertexPreset			( u32 preset );
 	void					SetVertexTransform		( u32 id );
@@ -326,8 +335,11 @@ public:
 	template < typename TYPE >
 	inline void Write ( const TYPE& type ) {
 		
+		size_t top = this->mTop + sizeof ( TYPE );
+		assert ( top < this->mSize );
+		
 		*( TYPE* )(( size_t )this->mBuffer + this->mTop ) = type;
-		this->mTop += sizeof ( TYPE );
+		this->mTop = top;
 	}
 	
 	//----------------------------------------------------------------//

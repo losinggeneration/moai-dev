@@ -5,6 +5,7 @@
 #include <png.h>
 #include <moaicore/MOAILogMessages.h>
 #include <moaicore/MOAIImage.h>
+#include <moaicore/MOAIDataBuffer.h>
 
 //================================================================//
 // local
@@ -32,6 +33,20 @@ int MOAIImage::_bleedRect ( lua_State* L ) {
 	self->BleedRect ( xMin, yMin, xMax, yMax );
 	
 	return 0;
+}
+
+//----------------------------------------------------------------//
+/**	@TODO
+*/
+
+int MOAIImage::_compare ( lua_State* L ) {
+	MOAI_LUA_SETUP ( MOAIImage, "UU" )
+
+	MOAIImage* image = state.GetLuaObject < MOAIImage >( 2, true );
+
+	lua_pushboolean ( state, self->Compare ( *image ));
+
+	return 1;
 }
 
 //----------------------------------------------------------------//
@@ -312,6 +327,39 @@ int MOAIImage::_load ( lua_State* L ) {
 	u32 transform	= state.GetValue < u32 >( 3, 0 );
 
 	self->Load ( filename, transform );
+
+	return 0;
+}
+
+//----------------------------------------------------------------//
+/**	@name	loadFromBuffer
+	@text	Loads an image from a buffer.
+
+	@in		MOAIImage self
+	@in		MOAIDataBuffer		Buffer containing the image
+	@opt	number transform	One of MOAIImage.POW_TWO, One of MOAIImage.QUANTIZE,
+								One of MOAIImage.TRUECOLOR, One of MOAIImage.PREMULTIPLY_ALPHA
+	@out	nil
+*/
+int MOAIImage::_loadFromBuffer ( lua_State* L ) {
+	MOAI_LUA_SETUP ( MOAIImage, "UU" )
+
+	MOAIDataBuffer* buffer = state.GetLuaObject < MOAIDataBuffer >( 2, true );
+	u32 transform = state.GetValue < u32 >( 3, 0 );
+	if ( buffer ) {
+		void* bytes = 0;
+		size_t size = 0;
+		USByteStream stream;
+
+		buffer->Lock ( &bytes, &size );
+	
+		stream.SetBuffer ( bytes, size );
+		stream.SetLength ( size );
+
+		self->Load ( stream, transform );
+
+		buffer->Unlock();
+	}
 
 	return 0;
 }
@@ -673,7 +721,9 @@ void MOAIImage::ClearRect ( USIntRect rect ) {
 void MOAIImage::ConvertColors ( const MOAIImage& image, USColor::Format colorFmt ) {
 	
 	if ( colorFmt == image.mColorFormat ) {
-		this->Copy ( image );
+		if ( this != &image ) {
+			this->Copy ( image );
+		}
 	}
 	else {
 	
@@ -688,6 +738,61 @@ void MOAIImage::ConvertColors ( const MOAIImage& image, USColor::Format colorFmt
 			USColor::Convert ( this->mPalette, this->mColorFormat, image.mPalette, image.mColorFormat, total );
 		}
 	}
+}
+
+//----------------------------------------------------------------//
+bool MOAIImage::Compare ( const MOAIImage& image ) {
+
+	if (( this->mWidth != image.mWidth ) || ( this->mHeight != image.mHeight )) {
+		return false;
+	}
+
+	float r [ 2 ][ 4 ] = { 0 };
+	float g [ 2 ][ 4 ] = { 0 };
+	float b [ 2 ][ 4 ] = { 0 };
+	float a [ 2 ][ 4 ] = { 0 };
+
+	for ( u32 i = 0; i < this->mHeight; i++ ) {
+		for ( u32 j = 0; j < this->mWidth; j++ ) {
+			USColorVec color1, color2;
+			color1.SetRGBA ( this->GetColor ( j, i ));
+			color2.SetRGBA ( image.GetColor ( j, i ));
+
+			r [ 0 ][ u32 ( USFloat::Max ( color1.mR * 4 - 1, 0 ))]++;
+			g [ 0 ][ u32 ( USFloat::Max ( color1.mG * 4 - 1, 0 ))]++;
+			b [ 0 ][ u32 ( USFloat::Max ( color1.mB * 4 - 1, 0 ))]++;
+			a [ 0 ][ u32 ( USFloat::Max ( color1.mA * 4 - 1, 0 ))]++;
+
+			r [ 1 ][ u32 ( USFloat::Max ( color2.mR * 4 - 1, 0 ))]++;
+			g [ 1 ][ u32 ( USFloat::Max ( color2.mG * 4 - 1, 0 ))]++;
+			b [ 1 ][ u32 ( USFloat::Max ( color2.mB * 4 - 1, 0 ))]++;
+			a [ 1 ][ u32 ( USFloat::Max ( color2.mA * 4 - 1, 0 ))]++;
+		}
+	}
+
+	for ( u32 i = 0; i < 2; i++ ) {
+		for ( u32 j = 0; j < 4; j++ ) {
+			r [ i ][ j ] = r [ i ][ j ] / ( this->mWidth * this->mHeight );
+			g [ i ][ j ] = g [ i ][ j ] / ( this->mWidth * this->mHeight );
+			b [ i ][ j ] = b [ i ][ j ] / ( this->mWidth * this->mHeight );
+			a [ i ][ j ] = a [ i ][ j ] / ( this->mWidth * this->mHeight );
+		}
+	}
+
+	for ( u32 i = 0; i < 4; i++ ) {
+		r [ 0 ][ i ] = USFloat::Abs ( r [ 0 ][ i ] - r [ 1 ][ i ]);
+		g [ 0 ][ i ] = USFloat::Abs ( g [ 0 ][ i ] - g [ 1 ][ i ]);
+		b [ 0 ][ i ] = USFloat::Abs ( b [ 0 ][ i ] - b [ 1 ][ i ]);
+		a [ 0 ][ i ] = USFloat::Abs ( a [ 0 ][ i ] - a [ 1 ][ i ]);
+	}
+
+	float similar = 0;
+
+	for ( u32 i = 0; i < 4; i++ ) {
+		similar += ( r [ 0 ][ i ] + g [ 0 ][ i ] + b [ 0 ][ i ] + a [ 0 ][ i ]);
+	}
+
+	return similar < .02;
 }
 
 //----------------------------------------------------------------//
@@ -1131,8 +1236,10 @@ const void* MOAIImage::GetRowAddr ( u32 y ) const {
 //----------------------------------------------------------------//
 u32 MOAIImage::GetRowSize () const {
 
-	u32 rowSize = ( this->mWidth * USPixel::GetDepth ( this->mPixelFormat, this->mColorFormat )) >> 3;
-	return ( rowSize + ( rowSize & 0x01 ));
+	if ( this->mPixelFormat == USPixel::INDEX_4 ) {
+		return ( this->mWidth >> 1 ) + ( this->mWidth & 0x01 );
+	}
+	return this->mWidth * ( USPixel::GetDepth ( this->mPixelFormat, this->mColorFormat ) >> 3 );
 }
 
 //----------------------------------------------------------------//
@@ -1195,12 +1302,15 @@ void MOAIImage::Init ( void* bitmap, u32 width, u32 height, USColor::Format colo
 }
 
 //----------------------------------------------------------------//
-bool MOAIImage::IsJpg ( const void* buffer, u32 size ) {
+bool MOAIImage::IsJpg ( USStream& stream ) {
 
 	u8 magic [] = { 0xFF, 0xD8, 0xFF }; // <?> <?> <?> <?>
 
+	char buffer [ 4 ];
+	u32 size = stream.PeekBytes ( buffer, 4 );
 	if ( size < 4 ) return false;
-	return ( memcmp ( buffer, magic, 3 ) == 0 )  &&  (((unsigned char*)buffer)[3] >= 0xe0  &&  ((unsigned char*)buffer)[3] <= 0xef);
+	
+	return ( memcmp ( buffer, magic, 3 ) == 0 )  &&  ((( unsigned char* )buffer)[ 3 ] >= 0xe0  &&  (( unsigned char* )buffer )[ 3 ] <= 0xef );
 }
 
 //----------------------------------------------------------------//
@@ -1216,58 +1326,38 @@ bool MOAIImage::IsPow2 ( u32 n ) {
 }
 
 //----------------------------------------------------------------//
-bool MOAIImage::IsPng ( const void* buffer, u32 size ) {
+bool MOAIImage::IsPng ( USStream& stream ) {
 
 	u8 magic [] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }; // <?> P N G <CR><LF><SUB><LF>
 
+	char buffer [ 8 ];
+	u32 size = stream.PeekBytes ( buffer, 8 );
 	if ( size < 8 ) return false;
-	return ( memcmp ( buffer, magic, 8 ) == 0 );
-}
-
-//----------------------------------------------------------------//
-void MOAIImage::Load ( USData& data, u32 transform ) {
-
-	void* bytes;
-	size_t size;
-	data.Lock ( &bytes, &size );
-
-	this->Load ( bytes, size, transform );
 	
-	data.Unlock ();
+	return ( memcmp ( buffer, magic, 8 ) == 0 );
 }
 
 //----------------------------------------------------------------//
 void MOAIImage::Load ( cc8* filename, u32 transform ) {
 
 	this->Clear ();
-	if ( !USFileSys::CheckFileExists ( filename )) return;
 	
 	USFileStream stream;
-	stream.OpenRead ( filename );
-	
-	u32 size = stream.GetLength ();
-	void* buffer = malloc ( size );
-	stream.ReadBytes ( buffer, size );
-	
-	stream.Close ();
-	
-	this->Load ( buffer, size, transform );
-	free ( buffer );
+	if ( stream.OpenRead ( filename )) {
+		this->Load ( stream, transform );
+		stream.Close ();
+	}
 }
 
 //----------------------------------------------------------------//
-void MOAIImage::Load ( const void* buffer, u32 size, u32 transform ) {
+void MOAIImage::Load ( USStream& stream, u32 transform ) {
 
 	this->Clear ();
 	
-	USByteStream stream;
-	stream.SetBuffer (( void* )buffer, size );
-	stream.SetLength ( size );
-	
-	if ( MOAIImage::IsPng ( buffer, size )) {
+	if ( MOAIImage::IsPng ( stream )) {
 		this->LoadPng ( stream, transform );
 	}
-	else if ( MOAIImage::IsJpg ( buffer, size )) {
+	else if ( MOAIImage::IsJpg ( stream )) {
 		this->LoadJpg ( stream, transform );
 	}
 }
@@ -1371,6 +1461,23 @@ void MOAIImage::PadToPow2 ( const MOAIImage& image ) {
 }
 
 //----------------------------------------------------------------//
+void MOAIImage::PremultiplyAlpha ( const MOAIImage& image ) {
+
+	if ( this != &image ) {
+		this->Copy ( image );
+	}
+
+	if ( this->mPixelFormat == USPixel::TRUECOLOR ) {
+		u32 total = this->mWidth * this->mHeight;
+		USColor::PremultiplyAlpha ( this->mBitmap, this->mColorFormat, total );
+	}
+	else {
+		u32 total = this->GetPaletteCount ();
+		USColor::PremultiplyAlpha ( this->mPalette, this->mColorFormat, total );
+	}
+}
+
+//----------------------------------------------------------------//
 void MOAIImage::RegisterLuaClass ( MOAILuaState& state ) {
 	
 	state.SetField ( -1, "FILTER_LINEAR", ( u32 )MOAIImage::FILTER_LINEAR );
@@ -1399,6 +1506,7 @@ void MOAIImage::RegisterLuaFuncs ( MOAILuaState& state ) {
 
 	luaL_Reg regTable [] = {
 		{ "bleedRect",			_bleedRect },
+		{ "compare",			_compare },
 		{ "convertColors",		_convertColors },
 		{ "copy",				_copy },
 		{ "copyBits",			_copyBits },
@@ -1410,6 +1518,7 @@ void MOAIImage::RegisterLuaFuncs ( MOAILuaState& state ) {
 		{ "getSize",			_getSize },
 		{ "init",				_init },
 		{ "load",				_load },
+		{ "loadFromBuffer",		_loadFromBuffer },
 		{ "padToPow2",			_padToPow2 },
 		{ "resize",				_resize },
 		{ "resizeCanvas",		_resizeCanvas },
@@ -1589,6 +1698,61 @@ void MOAIImage::Take ( MOAIImage& image ) {
 }
 
 //----------------------------------------------------------------//
+void MOAIImage::ToTrueColor ( const MOAIImage& image ) {
+
+	if ( image.mPixelFormat == USPixel::TRUECOLOR ) {
+		if ( this != &image ) {
+			this->Copy ( image );
+			return;
+		}
+	}
+	
+	MOAIImage newImage;
+	newImage.Init ( image.mWidth, image.mHeight, image.mColorFormat, USPixel::TRUECOLOR );
+	
+	for ( u32 i = 0; i < image.mHeight; ++i ) {
+		USPixel::ToTrueColor (
+			newImage.GetRowAddr ( i ),
+			image.GetRowAddr ( i ),
+			image.mPalette,
+			 image.mWidth * image.mHeight,
+			image.mColorFormat,
+			image.mPixelFormat
+		);
+	}
+	
+	this->Take ( newImage );
+}
+
+//----------------------------------------------------------------//
 void MOAIImage::Transform ( u32 transform ) {
-	UNUSED ( transform );
+	
+	if ( !transform ) return;
+	
+	if ( transform & MOAIImageTransform::TRUECOLOR ) {
+		this->ToTrueColor ( *this );
+	}
+	
+	if ( transform & MOAIImageTransform::PREMULTIPLY_ALPHA ) {
+		this->PremultiplyAlpha ( *this );
+	}
+	
+	if ( transform & MOAIImageTransform::QUANTIZE ) {
+	
+		USColor::Format colorFormat = this->mColorFormat;
+		
+		if ( this->mColorFormat == USColor::RGB_888 ) {
+			colorFormat = USColor::RGB_565;
+		}
+		
+		if ( this->mColorFormat == USColor::RGBA_8888 ) {
+			colorFormat = USColor::RGBA_4444;
+		}
+		
+		this->ConvertColors ( *this, colorFormat );
+	}
+	
+	if ( transform & MOAIImageTransform::POW_TWO ) {
+		this->PadToPow2 ( *this );
+	}
 }

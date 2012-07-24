@@ -178,13 +178,11 @@ int zl_get_stat ( char const* path, zl_stat* filestat ) {
 			ZLZipFileEntry* entry;
 
 			const char *filename = localpath;
-			int i = strlen ( filename ) - 1;
+			int i = strlen ( filename ) - 2;
 
 			result = stat ( mount->mArchive->mFilename.c_str (), &s );
 
 			if ( result ) return -1;
-
-
 
 			for ( ; i >= 0; --i ) {
 				if ( filename [ i ] == '/' ) {
@@ -205,9 +203,14 @@ int zl_get_stat ( char const* path, zl_stat* filestat ) {
 			}
 			else {
 				 // No entries found, check for directories
-				dir = parentDir->mChildDirs;
+				dir = parentDir;
+				std::string dirname = filename;
+				if ( dirname.length () && dirname [ dirname.length () - 1 ] != '/' ) {
+					dir = dir->mChildDirs;
+					dirname.append ( "/" );
+				}
 				for ( ; dir; dir = dir->mNext ) {
-					if ( strcmp_ignore_case ( dir->mName.c_str (), filename ) == 0 ) break;
+					if ( strcmp_ignore_case ( dir->mName.c_str (), dirname.c_str ()) == 0 ) break;
 				}
 
 				if ( dir ) {
@@ -226,8 +229,12 @@ int zl_get_stat ( char const* path, zl_stat* filestat ) {
 		}
 	}
 	else {
-	
-		result = stat ( path, &s );
+		
+		while ( abspath.size () && ( abspath [ abspath.length () - 1 ] == '/' )) {
+			abspath [ abspath.length () - 1 ] = 0;
+		}
+		
+		result = stat ( abspath.c_str (), &s );
 		if ( result ) return -1;
 
 		filestat->mExists = 1;
@@ -537,9 +544,14 @@ ZLFILE* zl_freopen ( const char* filename, const char* mode, ZLFILE* fp ) {
 
 	ZLFile* file = ( ZLFile* )fp;
 	if ( file ) {
-		delete file;
+
+		int result = file->Reopen ( filename, mode );
+
+		if ( result == 0 ) {
+			return ( ZLFILE* )file;
+		}
 	}
-	return zl_fopen ( filename, mode );
+	return 0;
 }
 
 //----------------------------------------------------------------//

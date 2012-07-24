@@ -53,12 +53,14 @@ namespace MoaiInputDeviceSensorID {
 @interface MoaiView ()
 
 	//----------------------------------------------------------------//
+	-( void )	drawView;
 	-( void )	handleTouches		:( NSSet* )touches :( BOOL )down;
 	-( void )	onUpdateAnim;
 	-( void )	onUpdateHeading		:( LocationObserver* )observer;
 	-( void )	onUpdateLocation	:( LocationObserver* )observer;
 	-( void )	startAnimation;
 	-( void )	stopAnimation;
+    -( void )   dummyFunc;
 
 @end
 
@@ -66,6 +68,8 @@ namespace MoaiInputDeviceSensorID {
 // MoaiView
 //================================================================//
 @implementation MoaiView
+    SYNTHESIZE	( GLint, width, Width );
+    SYNTHESIZE	( GLint, height, Height );
 
 	//----------------------------------------------------------------//
 	-( void ) accelerometer:( UIAccelerometer* )acel didAccelerate:( UIAcceleration* )acceleration {
@@ -80,6 +84,12 @@ namespace MoaiInputDeviceSensorID {
 		);
 	}
 
+    //----------------------------------------------------------------//
+    -( AKUContextID ) akuInitialized {
+
+        return mAku;
+    }
+
 	//----------------------------------------------------------------//
 	-( void ) dealloc {
 	
@@ -90,16 +100,20 @@ namespace MoaiInputDeviceSensorID {
 
 	//----------------------------------------------------------------//
 	-( void ) drawView {
-						
+		
 		[ self beginDrawing ];
 		
 		AKUSetContext ( mAku );
-        AKUSetViewSize ( mWidth, mHeight );
 		AKURender ();
 
 		[ self endDrawing ];
 	}
 	
+    //----------------------------------------------------------------//
+    -( void ) dummyFunc {
+        //dummy to fix weird input bug
+    }
+
 	//----------------------------------------------------------------//
 	-( void ) handleTouches :( NSSet* )touches :( BOOL )down {
 	
@@ -121,6 +135,7 @@ namespace MoaiInputDeviceSensorID {
 	//----------------------------------------------------------------//
 	-( id )init {
 		
+        mAku = 0;
 		self = [ super init ];
 		if ( self ) {
 		}
@@ -129,7 +144,8 @@ namespace MoaiInputDeviceSensorID {
 
 	//----------------------------------------------------------------//
 	-( id ) initWithCoder:( NSCoder* )encoder {
-	
+
+        mAku = 0;
 		self = [ super initWithCoder:encoder ];
 		if ( self ) {
 		}
@@ -138,7 +154,8 @@ namespace MoaiInputDeviceSensorID {
 	
 	//----------------------------------------------------------------//
 	-( id ) initWithFrame :( CGRect )frame {
-	
+
+        mAku = 0;
 		self = [ super initWithFrame:frame ];
 		if ( self ) {
 		}
@@ -156,13 +173,13 @@ namespace MoaiInputDeviceSensorID {
 		AKUExtLoadLuacrypto ();
 		AKUExtLoadLuasocket ();
 		
-#ifdef USE_UNTZ
-		AKUUntzInit ();
-#endif
+		#ifdef USE_UNTZ
+			AKUUntzInit ();
+		#endif
         
-#ifdef USE_FMOD_EX
-        AKUFmodExInit ();
-#endif
+		#ifdef USE_FMOD_EX
+			AKUFmodExInit ();
+		#endif
         
 		AKUAudioSamplerInit ();
         
@@ -183,6 +200,7 @@ namespace MoaiInputDeviceSensorID {
 		CGFloat screenHeight = screenRect.size.height * scale;
 		
 		AKUSetScreenSize ( screenWidth, screenHeight );
+		AKUSetViewSize ( mWidth, mHeight );
 		
 		AKUSetDefaultFrameBuffer ( mFramebuffer );
 		AKUDetectGfxContext ();
@@ -212,8 +230,10 @@ namespace MoaiInputDeviceSensorID {
 		[ self openContext ];
 		AKUSetContext ( mAku );
 		AKUUpdate ();
-		
 		[ self drawView ];
+        
+        //sometimes the input handler will get 'locked out' by the render, this will allow it to run
+        [ self performSelector: @selector(dummyFunc) withObject:self afterDelay: 0 ];
 	}
 	
 	//----------------------------------------------------------------//
